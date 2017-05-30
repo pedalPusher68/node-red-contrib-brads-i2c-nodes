@@ -1,5 +1,5 @@
 {
-  "name": "node-red-contrib-brads-sensors",
+  "name": "node-red-contrib-brads-i2c-nodes",
   "version": "0.0.1-alpha",
   "description": "Brad's Node RED i2c sensor modules.",
   "scripts": {
