@@ -22,17 +22,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pedalPusher68/first-node-red-module.git"
+    "url": "https://github.com/pedalPusher68/node-red-contrib-brads-i2c-nodes.git"
   },
   "keywords": [
     "node-red",
     "brad",
     "i2c"
   ],
-  "author": "Bradley Smith",
-  "license": "ISC",
+  "author": "Brad Smith",
+  "license": "LICENSE",
   "bugs": {
     "url": "https://github.com/pedalPusher68/first-node-red-module/issues"
   },
-  "homepage": "https://github.com/pedalPusher68/first-node-red-module#readme"
+  "homepage": "https://github.com/pedalPusher68/node-red-contrib-brads-i2c-nodes"
 }
