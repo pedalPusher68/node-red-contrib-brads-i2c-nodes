@@ -1,0 +1,71 @@
+<script type="text/javascript">
+  RED.nodes.registerType('tsl2561', {
+    category: 'i2c sensors',
+    defaults: {
+      address: {value: 57, required: true, validate:RED.validators.number() },
+      integ: {value: '2', required: true },
+      gain: {value: '1', required: true},
+      debugMode: {value: false}
+    },
+    color: '#75aaff',
+    inputs: 1,
+    outputs: 2,
+    icon: 'chip.png',
+    label: function () {
+      return `TSL2561 @ 0x${this.address.toString(16)}`;
+    },
+    labelStyle: function () {
+      return 'node_label_italic';
+    },
+    oneditsave: function() {
+      this.address = Number(this.address);
+    }
+  });
+</script>
+
+<script type="text/x-red" data-template-name="tsl2561">
+    <div class="form-row">
+        <span><i class="fa fa-microchip" aria-hidden="true"></i> TSL2561 Light-to-Digital Converter<br/> Sensor I2C Configuration</span>
+    </div>
+    <div class="form-row">
+        <label for="node-input-address"><i class="fa fa-address-card-o" aria-hidden="true"></i> Bus Address</label>
+         <select id="node-input-address">
+            <option value="41">0x29</option>
+            <option value="57">0x39 (float)</option>
+            <option value="73">0x49</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-integ"><i class="fa fa-thermometer-full" aria-hidden="true"></i> Integration Time</label>
+         <select id="node-input-integ">
+            <option value="0">13.7 ms</option>
+            <option value="1">101 ms</option>
+            <option value="2">402 ms</option>
+            <option value="3">N/A</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-gain"><i class="fa fa-address-card-o" aria-hidden="true"></i> Gain</label>
+         <select id="node-input-gain">
+            <option value="0">low gain (1x)</option>
+            <option value="1">high gain (16x)</option>
+            <option value="1">auto gain</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-debugMode"><i class="fa fa-tag"></i> Debug Mode</label>
+        <input type="checkbox" id="node-input-debugMode" placeholder="Debug Mode">
+    </div>
+
+    <div class="form-tips"><b>Tip:</b> This is here to help.</div>
+
+</script>
+
+<script type="text/x-red" data-help-name="tsl2561">
+   <p>UNDER DEVELOPMENT - NOT READY FOR USAGE.</p>
+   <p>Outputs an object called <code>msg</code> containing <code>msg.topic</code> and
+   <code>msg.payload</code>.</p>
+   <p><code>msg.payload</code> is a <i>String</i>.</p>
+
+</script>

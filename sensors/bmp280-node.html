@@ -1,0 +1,140 @@
+<!--
+  Copyright JS Foundation and other contributors, http://js.foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!-- Sample html file that corresponds to the 99-sample.js file              -->
+<!-- This creates and configures the onscreen elements of the node           -->
+
+<!-- If you use this as a template, update the copyright with your own name. -->
+
+<!-- First, the content of the edit dialog is defined.                       -->
+
+<script type="text/x-red" data-template-name="bmp280">
+    <div class="form-row">
+        <span><i class="fa fa-microchip" aria-hidden="true"></i> BMP280 Temperature/Pressure Sensor I2C Configuration</span>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+        <input type="text" id="node-input-topic" placeholder="Topic">
+    </div>
+    <br/>
+
+    <div class="form-row">
+        <label for="node-input-address"><i class="fa fa-address-card-o" aria-hidden="true"></i> I2C Address</label>
+         <select id="node-input-address">
+            <option value="118">0x76 (SDO to GND)</option>
+            <option value="119">0x77 (default)</option>
+        </select>
+    </div>
+    <br/>
+
+    <div class="form-row">
+        <label for="node-input-tresolution"><i class="fa fa-thermometer-full" aria-hidden="true"></i> Temperature Resolution</label>
+         <select id="node-input-tresolution">
+            <option value="32">+/- 0.009 ℉</option>
+            <option value="64">+/- 0.0045 ℉</option>
+            <option value="96">+/- 0.00225 ℉</option>
+            <option value="128">+/- 0.001125 ℉</option>
+            <option value="160">+/- 0.0005625 ℉</option>
+        </select>
+    </div>
+    <br/>
+
+    <div class="form-row">
+        <label for="node-input-presolution"><i class="fa fa-thermometer-empty" aria-hidden="true"></i> Pressure Resolution</label>
+         <select id="node-input-presolution">
+            <option value="4">+/- 0.000773685 inches Hg</option>
+            <option value="8">+/- 0.000386843 inches Hg</option>
+            <option value="12">+/- 0.000193421 inches Hg</option>
+            <option value="16">+/- 0.000096711 inches Hg</option>
+            <option value="20">+/- 0.000048355 inches Hg</option>
+        </select>
+    </div>
+    <br/>
+
+    <div class="form-row">
+        <label for="node-input-powermode"><i class="fa fa-power-off" aria-hidden="true"></i> Power Mode</label>
+         <select id="node-input-powermode">
+            <option value="0">Sleep</option>
+            <option value="1">Force (Best - lowest Power)</option>
+            <option value="3">Normal</option>
+        </select>
+    </div>
+    <br/>
+
+   <!-- Each of the following divs creates a field in the edit dialog.       -->
+   <!-- Generally, there should be an input for each property of the node.   -->
+   <!-- The for and id attributes identify the corresponding property        -->
+   <!-- (with the 'node-input-' prefix).                                     -->
+   <!-- The available icon classes are defined Font Awesome Icons (FA Icons) -->
+
+    <!-- By convention, most nodes have a 'name' property. The following div -->
+    <!-- provides the necessary field. Should always be the last option      -->
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+
+<!-- Next, some simple help text is provided for the node.                   -->
+<script type="text/x-red" data-help-name="bmp280">
+   <!-- data-help-name identifies the node type this help is for             -->
+   <!-- This content appears in the Info sidebar when a node is selected     -->
+   <!-- The first <p> is used as the pop-up tool tip when hovering over a    -->
+   <!-- node in the palette.                                                 -->
+   <p>Simple sample input node. Just sends a single message when it starts up.
+   This is not very useful.</p>
+   <p>Outputs an object called <code>msg</code> containing <code>msg.topic</code> and
+   <code>msg.payload</code>. msg.payload is a String.</p>
+</script>
+
+<!-- Finally, the node type is registered along with all of its properties   -->
+<!-- The example below shows a small subset of the properties that can be set-->
+<script type="text/javascript">
+  RED.nodes.registerType('bmp280',{
+    category: 'i2c sensors',      // the palette category
+    defaults: {             // defines the editable properties of the node
+      name: {value:'bmp280'},   //  along with default values.
+      topic: {value:"", required:false},
+      address: {value: 0x77, required: true, validate:RED.validators.number() },
+      powermode: {value:1, validate:RED.validators.number() },
+      tresolution: {value:160, validate:RED.validators.number() },
+      presolution: {value:20, validate:RED.validators.number() }
+    },
+    color: '#75aaff',
+    inputs: 1,  // set the number of inputs - only 0 or 1
+    outputs: 2,  // set the number of outputs - 0 to n
+    icon: 'chip.png',
+    // set the icon (held in icons dir below where you save the node)
+    label: function() {     // sets the default label contents
+      return this.name||this.topic||"bmp280";
+    },
+    labelStyle: function() { // sets the class to apply to the label
+      return this.name?"node_label_italic":"";
+    },
+    oneditsave: function() {
+      this.log( Number(this.tresolution) );
+      this.address = Number(this.address);
+      this.powermode = Number(this.powermode);
+      this.tresolution = Number(this.tresolution);
+      this.presolution = Number(this.presolution);
+    }
+
+  });
+</script>
+Contact GitHub API Training Shop Blog About
+© 2017 GitHub, Inc. Terms Privacy Security Status Help

@@ -1,0 +1,80 @@
+<script type="text/javascript">
+  RED.nodes.registerType('mcp9808', {
+    category: 'i2c sensors',
+    defaults: {
+      name: {value: ''},
+      resolution: {value: '3', required: false, validate:RED.validators.number() },
+      address: {value: 24, required: true, validate:RED.validators.number() },
+      units: {value: 'F'},// TODO - add units checkboxes below - Celsius or Fahrenheit
+      debugMode: {value: false}
+    },
+    color: '#75aaff',
+    inputs: 1,
+    outputs: 2,
+    icon: 'chip.png',
+    label: function () {
+      return this.name || 'MCP9808';
+    },
+    labelStyle: function () {
+      return this.name ? 'node_label_italic' : '';
+    },
+    oneditsave: function() {
+      this.address = Number(this.address);
+    }
+  });
+</script>
+
+<script type="text/x-red" data-template-name="mcp9808">
+    <div class="form-row">
+        <span><i class="fa fa-microchip" aria-hidden="true"></i> MCP9808 Temperature Sensor I2C Configuration</span>
+    </div>
+    <div class="form-row">
+        <label for="node-input-units"><i class="fa fa-tag"></i> Units</label>
+        <select id="node-input-units">
+            <option value="F"><span style="font-weight:bold;">(℉)</span> - Fahrenheit</option>
+            <option value="C"><span style="font-weight:bold;">(℃)</span> - Celsius</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-address"><i class="fa fa-address-card-o" aria-hidden="true"></i> Bus Address</label>
+         <select id="node-input-address">
+            <option value="24">0x18 (default)</option>
+            <option value="25">0x19</option>
+            <option value="26">0x1a</option>
+            <option value="27">0x1b</option>
+            <option value="28">0x1c</option>
+            <option value="29">0x1d</option>
+            <option value="30">0x1e</option>
+            <option value="31">0x1f</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-resolution"><i class="fa fa-thermometer-full" aria-hidden="true"></i> Resolution</label>
+         <select id="node-input-resolution">
+            <option value="0">+/- 0.9 ℉</option>
+            <option value="1">+/- 0.45 ℉</option>
+            <option value="2">+/- 0.225 ℉</option>
+            <option value="3">+/- 0.1125 ℉ (default)</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-debugMode"><i class="fa fa-tag"></i> Debug Mode</label>
+        <input type="checkbox" id="node-input-debugMode" placeholder="Debug Mode">
+    </div>
+
+    <div class="form-tips"><b>Tip:</b> This is here to help.</div>
+
+</script>
+
+<script type="text/x-red" data-help-name="mcp9808">
+   <p>Some useful help text to introduce the node.</p>
+   <p>Outputs an object called <code>msg</code> containing <code>msg.topic</code> and
+   <code>msg.payload</code>.</p>
+   <p><code>msg.payload</code> is a <i>String</i>.</p>
+
+</script>

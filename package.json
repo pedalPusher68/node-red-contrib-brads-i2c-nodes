@@ -1,0 +1,38 @@
+{
+  "name": "node-red-contrib-brads-sensors",
+  "version": "0.0.1-alpha",
+  "description": "Brad's Node RED i2c sensor modules.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "i2c-bus":"^1.2.1",
+    "bignumber.js": "^4.0.0"
+  },
+  "node-red"     : {
+    "nodes": {
+      "mcp9808": "sensors/mcp9808-node.js",
+      "bmp280": "sensors/bmp280-node.js",
+      "bme280": "sensors/bme280-node.js",
+      "htu21df": "sensors/htu21df-node.js",
+      "i2cbus": "sensors/i2c-bus.js",
+      "tsl2561": "sensors/tsl2561-node.js",
+      "collector": "sensors/collector-node.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pedalPusher68/first-node-red-module.git"
+  },
+  "keywords": [
+    "node-red",
+    "brad",
+    "i2c"
+  ],
+  "author": "Bradley Smith",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pedalPusher68/first-node-red-module/issues"
+  },
+  "homepage": "https://github.com/pedalPusher68/first-node-red-module#readme"
+}
