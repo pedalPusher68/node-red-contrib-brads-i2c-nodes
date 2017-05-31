@@ -26,7 +26,11 @@
   },
   "keywords": [
     "node-red",
-    "brad",
+    "mcp9808",
+    "bmp280",
+    "bme280",
+    "htu21df",
+    "tsl2561",
     "i2c"
   ],
   "author": "Brad Smith",
