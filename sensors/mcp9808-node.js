@@ -8,7 +8,6 @@ module.exports = function (RED) {
   // NPM Imports
   const i2c = require('i2c-bus');
   // Local Imports
-  // const Measurement = require('./Measurement.js');
 
   //                  AAA
   //                  210
@@ -22,7 +21,6 @@ module.exports = function (RED) {
   const MCP9808Address110 = 0x1e;
   const MCP9808Address111 = 0x1f;
 
-  // TODO connect these register constants to appropriate Node RED inputs HTML for this node...
   const REGISTER_CONFIGURATION = 0x01;
   const REGISTER_ALERT_TEMP_UPPER_BOUNDARY = 0x02;
   const REGISTER_ALERT_TEMP_LOWER_BOUNDARY = 0x03;
@@ -73,9 +71,6 @@ module.exports = function (RED) {
   };
 
   let i2cBus = undefined;
-
-  //         a2tjosmj04ve84.iot.us-east-1.amazonaws.com
-  //zipw-001@a2tjosmj04ve84.iot.us-east-1.amazonaws.com
 
   function mcp9808(config) {
 
