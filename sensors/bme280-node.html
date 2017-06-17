@@ -44,23 +44,23 @@
     <div class="form-row">
         <label for="node-input-tresolution"><i class="fa fa-thermometer-full" aria-hidden="true"></i> Temperature Resolution</label>
          <select id="node-input-tresolution">
-            <option value="32">+/- 0.009 ℉</option>
-            <option value="64">+/- 0.0045 ℉</option>
-            <option value="96">+/- 0.00225 ℉</option>
-            <option value="128">+/- 0.001125 ℉</option>
-            <option value="160">+/- 0.0005625 ℉</option>
+            <option value="32">x 1</option>
+            <option value="64">x 2</option>
+            <option value="96">x 4</option>
+            <option value="128">x 8</option>
+            <option value="160">x 16</option>
         </select>
     </div>
     <br/>
 
     <div class="form-row">
-        <label for="node-input-presolution"><i class="fa fa-thermometer-empty" aria-hidden="true"></i> Pressure Resolution</label>
+        <label for="node-input-presolution"><i class="fa fa-thermometer-empty" aria-hidden="true"></i> Pressure Oversampling</label>
          <select id="node-input-presolution">
-            <option value="4">+/- 0.000773685 inches Hg</option>
-            <option value="8">+/- 0.000386843 inches Hg</option>
-            <option value="12">+/- 0.000193421 inches Hg</option>
-            <option value="16">+/- 0.000096711 inches Hg</option>
-            <option value="20">+/- 0.000048355 inches Hg</option>
+            <option value="4">x 1</option>
+            <option value="8">x 2</option>
+            <option value="12">x 4</option>
+            <option value="16">x 8</option>
+            <option value="20">x 16</option>
         </select>
     </div>
     <br/>
@@ -68,6 +68,7 @@
     <div class="form-row">
         <label for="node-input-hresolution"><i class="fa fa-tint" aria-hidden="true"></i> Humidity Oversampling</label>
          <select id="node-input-hresolution">
+            <option value="0">Skip Humidity Reading</option>
             <option value="1">x 1</option>
             <option value="2">x 2</option>
             <option value="3">x 4</option>
@@ -85,20 +86,14 @@
             <option value="3">Normal</option>
         </select>
     </div>
+    <!-- TODO:  when normal mode is selected, user should also select a standby time for the sensor... -->
     <br/>
 
-   <!-- Each of the following divs creates a field in the edit dialog.       -->
-   <!-- Generally, there should be an input for each property of the node.   -->
-   <!-- The for and id attributes identify the corresponding property        -->
-   <!-- (with the 'node-input-' prefix).                                     -->
-   <!-- The available icon classes are defined Font Awesome Icons (FA Icons) -->
-
-    <!-- By convention, most nodes have a 'name' property. The following div -->
-    <!-- provides the necessary field. Should always be the last option      -->
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
+        <label for="node-input-debugMode"><i class="fa fa-tag"></i> Debug Mode</label>
+        <input type="checkbox" id="node-input-debugMode" placeholder="Debug Mode">
     </div>
+
 </script>
 
 
@@ -119,21 +114,21 @@
   RED.nodes.registerType('bme280',{
     category: 'i2c sensors',      // the palette category
     defaults: {             // defines the editable properties of the node
-      name: {value:'bme280'},   //  along with default values.
       topic: {value:"", required:false},
       address: {value: 0x77, required: true, validate:RED.validators.number() },
       powermode: {value:1, validate:RED.validators.number() },
       tresolution: {value:160, validate:RED.validators.number() },
       presolution: {value:20, validate:RED.validators.number() },
-      hresolution: {value:5, validate:RED.validators.number() }
+      hresolution: {value:5, validate:RED.validators.number() },
+      debugMode: {value: false}
     },
     color: '#75aaff',
     inputs: 1,  // set the number of inputs - only 0 or 1
     outputs: 2,  // set the number of outputs - 0 to n
     icon: 'chip.png',
     // set the icon (held in icons dir below where you save the node)
-    label: function() {     // sets the default label contents
-      return this.name||this.topic||"bme280";
+    label: function () {
+      return `BME280 @ 0x${this.address.toString(16)}`;
     },
     labelStyle: function() { // sets the class to apply to the label
       return this.name?"node_label_italic":"";
