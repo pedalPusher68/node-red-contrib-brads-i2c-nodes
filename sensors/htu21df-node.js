@@ -48,7 +48,6 @@ module.exports = function (RED) {
   const waitTimeRH10BIT = 5;//ms
   const waitTimeRH8BIT = 3;//ms
 
-
   const A = new BigNumber('8.1332');
   const B = new BigNumber('1763.39');
   const C = new BigNumber('235.66');
