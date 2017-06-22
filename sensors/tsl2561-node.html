@@ -12,7 +12,7 @@
     outputs: 2,
     icon: 'chip.png',
     label: function () {
-      return `TSL2561 @ 0x${this.address.toString(16)}`;
+      return `TSL2561 @ 0x${Number(this.address).toString(16)}`;
     },
     labelStyle: function () {
       return 'node_label_italic';
@@ -63,9 +63,12 @@
 </script>
 
 <script type="text/x-red" data-help-name="tsl2561">
-   <p>UNDER DEVELOPMENT - NOT READY FOR USAGE.</p>
+   <p>Node for working with <a href="http://ams.com/eng/Products/Light-Sensors/Ambient-Light-Sensors/TSL2561">ams TSL2561 Light Sensor</a> over i2c bus on Raspberry Pi.</p>
+
+   <p>Input is a string <code>command</code> message.
    <p>Outputs an object called <code>msg</code> containing <code>msg.topic</code> and
    <code>msg.payload</code>.</p>
    <p><code>msg.payload</code> is a <i>String</i>.</p>
 
+   <a href="http://ams.com/eng/Products/Light-Sensors/Ambient-Light-Sensors/TSL2561/TSL2560-TSL2561-Datasheet">TSL2561 Datasheet Download</a>
 </script>

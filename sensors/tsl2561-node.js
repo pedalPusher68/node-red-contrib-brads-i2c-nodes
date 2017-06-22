@@ -1,6 +1,18 @@
 /**
- * Created by brad on 3/27/17.
- */
+ * Copyright Bradley Smith, bradley.1.smith@gmail.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ **/
 
 module.exports = function (RED) {
 
@@ -9,7 +21,7 @@ module.exports = function (RED) {
   // NPM Imports
   const i2c = require('i2c-bus');
   // Local Imports
-  // const Measurement = require('./Measurement.js');
+  const Util = require('./util.js');
 
   const TSL2561ddress000 = 0x29;
   const TSL2561ddress001 = 0x39; // default (floating)
@@ -105,9 +117,14 @@ module.exports = function (RED) {
 
     // 1. Process Config
     node.debugMode = (config && config.debugMode);
-    if (node.debugMode) {
-      node.log(JSON.stringify(config));
+
+    function debug(msg) {
+      if (node.debugMode) {
+        node.log(msg);
+      }
     }
+
+    debug(JSON.stringify(config));
     node.address = config.address;
     if (node.address < TSL2561ddress000 || node.address > TSL2561ddress002) {
       node.error(`${node.address} is a bad address - check config.`);
@@ -131,7 +148,7 @@ module.exports = function (RED) {
     }
 
     this.on('deploy', (msg) => {
-      node.log(`deploy event recieved msg -> ${JSON.stringify(msg)}`);
+      debug(`deploy event recieved msg -> ${JSON.stringify(msg)}`);
     });
 
     // 2. Initialize Sensor
@@ -147,8 +164,7 @@ module.exports = function (RED) {
       }
     }
 
-    let dp = (node.resolution) ? node.resolution.decimalPlaces : 4;
-    BigNumber.config({DECIMAL_PLACES: dp});
+    node.decimalPlaces = (node.resolution) ? node.resolution.decimalPlaces : 4;
 
     let init = new Promise((resolve, reject) => {
       i2cBus.writeByte(node.address, CMD | REGISTER_CONTROL, POWER_UP, (err) => {
@@ -159,9 +175,7 @@ module.exports = function (RED) {
           reject(errMsg);
         } else {
           i2cBus.readByte(node.address, CMD | REGISTER_CONTROL, (err, byteRead) => {
-            if (node.debugMode) {
-              node.log(`err -> ${err},  byteRead -> 0b${byteRead.toString(2)} (all bits)`);
-            }
+            debug(`err -> ${err},  byteRead -> 0b${byteRead.toString(2)} (all bits)`);
             byteRead = byteRead & 0b00000011 // mask out bits 7-2;  they're reserved and can thus be anything.
             if (err || byteRead !== POWER_UP) {
               let errMsg = `tsl2561 POWER_UP error:  ${err}, byte read -> 0b${byteRead.toString(2)}`;
@@ -184,16 +198,13 @@ module.exports = function (RED) {
             node.status({fill: "red", shape: "ring", text: errMsg});
             reject(errMsg);
           } else {
-            if (node.debugMode) {
-              node.log(`0b${byteRead.toString(2)}`);
-            }
+            debug(`0b${byteRead.toString(2)}`);
+
             let d = DEVID.get(0xf0 & byteRead);
             if (d) {
               node.deviceId = d;
               node.revision = 0xf0 & byteRead;
-              if (node.debugMode) {
-                node.log(`node.deviceId -> ${node.deviceId},  node.revision -> ${node.revision}`);
-              }
+              debug(`node.deviceId -> ${node.deviceId},  node.revision -> ${node.revision}`);
               resolve(`tsl2561 get device ID succeeded`);
             } else {
               let errMsg = `tsl2561 get device ID error:  unknown device ->  0x${d.toString(2)}`;
@@ -226,15 +237,7 @@ module.exports = function (RED) {
     });
 
     node.on('sensor_ready', (msg) => {
-      if (node.debugMode) {
-        node.log(`sensor_ready:  msg -> ${msg}`);
-        node.log(`tsl2561 init`);
-        node.log(`==========================================`);
-        node.log(`deviceId -> ${node.deviceId}`);
-        node.log(`revision -> ${node.revision}`);
-        node.log(`------------------------------------------`);
-      }
-      node.status({fill: "green", shape: "dot", text: `${node.name} (${node.deviceId}) ready.`});
+      node.status({fill: "green", shape: "dot", text: `${node.deviceId} rev. ${node.revision} ready.`});
     });
 
     this.on('input', (msg) => {
@@ -251,8 +254,8 @@ module.exports = function (RED) {
             let channel1 = 0;
 
             let mp1 = new Promise((resolve, reject) => {
-              node.log(`CMD | REGISTER_TIMING | BLOCK -> 0b${(CMD | REGISTER_TIMING | BLOCK).toString(2)}`);
-              node.log(`GAIN_HIGH | node.integ.value -> 0b${(GAIN_HIGH | node.integ.value).toString(2)}`);
+              debug(`CMD | REGISTER_TIMING | BLOCK -> 0b${(CMD | REGISTER_TIMING | BLOCK).toString(2)}`);
+              debug(`GAIN_HIGH | node.integ.value -> 0b${(GAIN_HIGH | node.integ.value).toString(2)}`);
               i2cBus.writeByte(node.address, CMD | REGISTER_TIMING | BLOCK, GAIN_HIGH | node.integ.value, (err) => {
                 if (err) {
                   let errMsg = `tsl2561 measure:  set timing error:  ${err},\t node.integ -> ${JSON.stringify(node.integ)}`;
@@ -266,12 +269,6 @@ module.exports = function (RED) {
                         node.status({fill: "red", shape: "ring", text: errMsg});
                         reject(errMsg);
                       } else {
-                        let frogbait = '';
-                        for (let dataByte of buffer) {
-                          frogbait += `0x${dataByte.toString(16)} `;
-                        }
-                        node.log(frogbait);
-
                         channel0 = buffer[1] * 256 + buffer[0];
                         channel1 = buffer[3] * 256 + buffer[2];
                         if (node.debugMode) {
@@ -290,50 +287,26 @@ module.exports = function (RED) {
                           }
                         }
 
-                        let c0 = new BigNumber(channel0);
-                        let c1 = new BigNumber(channel1);
-
-                        if (c0 !== 0) {
-                          let ratio = c1.div(c0);
-                          if (ratio.gt(0) & ratio.lte(0.50)) {
-                            // Lux = 0.0304 × CH0 - 0.062 × CH0 × ((CH1/CH0)^1.4)
-                            let shit = Math.pow(ratio.toNumber(), 1.4).toString();
-                            if (shit.length > 15) {
-                              shit = shit.substr(0, 14);
-                            }
-                            lux = c0.times(0.0304).minus(c0.times(0.062).times(shit)).toNumber();
-                          } else if (ratio.gt(0.50) & ratio.lte(0.61)) {
-                            // Lux = 0.0224 × CH0 - 0.031 × CH1
-                            lux = c0.times(0.0224).minus(c1.times(0.031)).toNumber();
-                          } else if (ratio.gt(0.61) & ratio.lte(0.80)) {
-                            // Lux = 0.0128 × CH0 - 0.0153 × CH1
-                            lux = c0.times(0.0128).minus(c1.times(0.0153)).toNumber();
-                          } else if (ratio.gt(0.80) & ratio.lte(1.30)) {
-                            //Lux = 0.00146 × CH0 - 0.00112 × CH1
-                            lux = c0.times(0.00146).minus(c1.times(0.00112)).toNumber();
-                          } else if (ratio.gt(1.30)) {
-                            lux = 0;
-                          }
-                        } else {
-                          node.log(`channel0 = 0:  Lux calculation skipped.`);
-                        }
-                        node.log(`Approximate Lux:  ${lux}`);
+                        debug(`Approximate Lux:  ${lux}`);
                         lux = calculateLux(channel0, channel1, node.integ.value, GAIN_HIGH);
-                        let measurementDate = new Date().toLocaleString('en-US', dateFormatOptions);
-                        resolve({"lux": lux, "timestamp": measurementDate});
+                        let timestamp = new Date().toLocaleString('en-US', dateFormatOptions);
+
+                        resolve(
+                          {
+                            'name': node.name,
+                            'timestamp': timestamp,
+                            'lux': Util.roundValue(lux),
+                            'ch0': channel0,
+                            'ch1': channel1
+                          }
+                        );
                       }
                     });
                   }, node.integ.timeMs);
                 }
               });
             }).then((resolve) => {
-                node.log(JSON.stringify(resolve));
-                let payload1 = {
-                  device: "sensor",
-                  name: "tsl2561",
-                  lux: resolve.lux,
-                  timestamp: resolve.timestamp
-                };
+              debug(JSON.stringify(resolve));
 
                 let thingShadow = {
                   state: {
@@ -347,7 +320,7 @@ module.exports = function (RED) {
                 };
 
                 node.send([
-                  {topic: 'tsl2561', payload: payload1},
+                  {topic: 'tsl2561', payload: resolve},
                   {topic: 'tsl2561', payload: thingShadow}
                 ]);
 
@@ -369,8 +342,6 @@ module.exports = function (RED) {
   }
 
   RED.nodes.registerType("tsl2561", tsl2561);
-  // TODO - see https://nodered.org/docs/creating-nodes/status to set status while node is running...
-
 
   const LUX_SCALE = 14;
   const RATIO_SCALE = 9;

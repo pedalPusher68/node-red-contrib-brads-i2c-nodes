@@ -8,6 +8,7 @@ module.exports = function (RED) {
   // NPM Imports
   const i2c = require('i2c-bus');
   // Local Imports
+  const Util = require('./util.js');
 
   //                  AAA
   //                  210
@@ -85,15 +86,21 @@ module.exports = function (RED) {
 
     // 1. Process Config
     node.debugMode = (config && config.debugMode);
-    if (node.debugMode) {
-      node.log(JSON.stringify(config));
+
+    function debug(msg) {
+      if (node.debugMode) {
+        node.log(msg);
+      }
     }
-    node.name = (config && config.name) ? config.name : undefined;
+
+    debug(JSON.stringify(config));
+
     node.address = config.address;
     if (node.address < MCP9808Address000 || node.address > MCP9808Address111) {
       node.error(`${node.address} is a bad address - check config.`);
       node.status({fill: "red", shape: "ring", text: `${node.address} is a bad address - check config.`});
     }
+    node.name = `MCP9808 @ 0x${node.address.toString(16)}`;
     node.resolution = (config && config.resolution) ? RESOLUTIONS.get(config.resolution) : RESOLUTIONS.get('3');
     node.units = (config && config.units) ? config.units : 'F';
 
@@ -107,7 +114,7 @@ module.exports = function (RED) {
     }
 
     this.on('deploy', (msg) => {
-      node.log(`deploy event recieved msg -> ${msg}`);
+      debug(`deploy event received msg -> ${msg}`);
     });
 
     // 2. Initialize Sensor
@@ -137,15 +144,11 @@ module.exports = function (RED) {
           // TODO - on 4/22/2017, the wordBytes seem to be reverse from what I've seen to this point...
           // TODO   - pull ManufacturerId for comparison - should be 0x0054
           node.deviceId = wordBytes;
-          node.log(`wordBytes => 0x${wordBytes.toString(16)}, B${wordBytes.toString(2)},  deviceId -> ${node.deviceId}`);
+          debug(`wordBytes => 0x${wordBytes.toString(16)}, B${wordBytes.toString(2)},  deviceId -> ${node.deviceId}`);
           // if (node.deviceId != 0x04) {
           //   reject(`Bad deviceId (${node.deviceId}) at address 0x${node.address.toString(16)}.`);
           // }
-          let resolveMsg = `Device ID:  0x${node.deviceId.toString(16)}`;
-          if (node.debugMode) {
-              node.log(resolveMsg);
-          }
-          resolve(resolveMsg);
+          resolve(`Device ID:  0x${node.deviceId.toString(16)}`);
         }
       });
     });
@@ -172,9 +175,7 @@ module.exports = function (RED) {
     });
 
     node.on('sensor_ready', (msg) => {
-      if (node.debugMode) {
-        node.log(`sensor_ready:  msg -> ${msg}`);
-      }
+      debug(`sensor_ready:  msg -> ${msg}`);
       node.status({fill: "green", shape: "dot", text: "mcp9808 ready"});
     });
 
@@ -183,7 +184,7 @@ module.exports = function (RED) {
       if (node.ready) {
         let command = msg.payload; // One of:  measure, set_config, get_config, ... TODO - add other input types support
         if (command) {
-          if ("measure" == command) {
+          if ("measure" === command) {
 
             let mp1 = new Promise((resolve, reject) => {
               i2cBus.writeByte(node.address, REGISTER_TEMPERATURE, 0x01, (err) => {
@@ -201,41 +202,37 @@ module.exports = function (RED) {
                         let lowerByte = buffer[1];
                         let posNeg = (upperByte & 0x10) ? -1 : 1;
                         let temperature = new BigNumber(lowerByte).div(16).plus(upperByte * 16);
-                        if (posNeg == -1) {
+                        if (posNeg === -1) {
                           upperByte = upperByte & 0x0f;
                           temperature = temperature.neg().plus(256);
                         }
                         let temperatureF = temperature.times(1.8).plus(32.0);
-                        let measurementDate = new Date().toLocaleString('en-US', dateFormatOptions);
+                        let timestamp = new Date().toLocaleString('en-US', dateFormatOptions);
 
-                        node.log("temperatureF -> "+temperatureF);
-                        resolve({
-                          temperature: temperature,
-                          temperatureF: temperatureF,
-                          timestamp: measurementDate
-                        });
+                        debug("temperatureF -> " + temperatureF);
+                        resolve(
+                          {
+                            'name': node.name,
+                            'timestamp': timestamp,
+                            'Tc': Util.roundValue(temperature),
+                            'Tf': Util.roundValue(temperatureF)
+                          }
+                        );
                       }
                     });
                   }
                 }, node.resolution.timeMs);
               });
             }).then( (resolve) => {
-              node.log( JSON.stringify( resolve ));
-              let payload1 = {
-                device: "sensor",
-                name: "mcp9808",
-                temperatureF: resolve.temperatureF,
-                temperatureC: resolve.temperature,
-                resolution: node.resolution.display,
-                timestamp: resolve.timestamp
-              };
+              debug(JSON.stringify(resolve));
+              //{ 'name': node.name, 'timestamp': timestamp, 'Tc':Util.roundValue( temperature ), 'Tf':Util.roundValue(temperatureF) }
 
               let thingShadow = {
                 state: {
                   "reported": {
                     "device": "sensor",
                     "name": "mcp9808",
-                    "temperature": resolve.temperatureF,
+                    "temperature": resolve.Tf,
                     "temperatureUnits": "degrees Fahrenheit",
                     "deviceResolution": node.resolution.displayF,
                     "timestamp": resolve.timestamp
@@ -244,7 +241,7 @@ module.exports = function (RED) {
               };
 
               node.send([
-                {topic: 'mcp9808', payload: payload1},
+                {topic: 'mcp9808', payload: resolve},
                 {topic: 'mcp9808', payload: thingShadow}
               ]);
 
@@ -255,19 +252,16 @@ module.exports = function (RED) {
             );
 
           } else if ("some_other_tbd_command" == command) {
-            // TODO - set mcp9808 configuration
+            // TODO - respond to another command
           } else {
-
+            // no op
           }
         }
       }
     });
-
   }
 
   RED.nodes.registerType("mcp9808", mcp9808);
-
-  // TODO - see https://nodered.org/docs/creating-nodes/status to set status while node is running...
 
 }
 

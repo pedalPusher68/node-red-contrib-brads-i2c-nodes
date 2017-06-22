@@ -2,7 +2,6 @@
   RED.nodes.registerType('mcp9808', {
     category: 'i2c sensors',
     defaults: {
-      name: {value: ''},
       resolution: {value: '3', required: false, validate:RED.validators.number() },
       address: {value: 24, required: true, validate:RED.validators.number() },
       units: {value: 'F'},// TODO - add units checkboxes below - Celsius or Fahrenheit
@@ -13,10 +12,10 @@
     outputs: 2,
     icon: 'chip.png',
     label: function () {
-      return this.name || 'MCP9808';
+      return `MCP9808 @ 0x${Number(this.address).toString(16)}`;
     },
     labelStyle: function () {
-      return this.name ? 'node_label_italic' : '';
+      return this.address ? 'node_label_italic' : '';
     },
     oneditsave: function() {
       this.address = Number(this.address);
