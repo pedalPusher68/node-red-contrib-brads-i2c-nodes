@@ -22,6 +22,9 @@
 <!-- First, the content of the edit dialog is defined.                       -->
 
 <script type="text/x-red" data-template-name="htu21df">
+    <div class="form-row">
+        <span><i class="fa fa-microchip" aria-hidden="true"></i> HTU21D(F) Digital Relative Humidity & Temperature<br/> Sensor I2C Configuration</span>
+    </div>
    <!-- data-template-name identifies the node type this is for              -->
 
    <!-- Each of the following divs creates a field in the edit dialog.       -->
@@ -35,11 +38,25 @@
     </div>
 
     <br/>
-    <!-- By convention, most nodes have a 'name' property. The following div -->
-    <!-- provides the necessary field. Should always be the last option      -->
+
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
+        <label for="node-input-mRes"><i class="fa fa-thermometer-full" aria-hidden="true"></i>Measurement Resolution</label>
+         <select id="node-input-mRes">
+            <option value="0">RH 12 bits / T 14 bits (default)</option>
+            <option value="1">RH  8 bits / T 12 bits</option>
+            <option value="2">RH 10 bits / T 13 bits</option>
+            <option value="3">RH 11 bits / T 11 bits</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-F"><i class="fa fa-tag"></i> F</label>
+        <input type="checkbox" id="node-input-F" placeholder="F">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-debugMode"><i class="fa fa-tag"></i> Debug Mode</label>
+        <input type="checkbox" id="node-input-debugMode" placeholder="Debug Mode">
     </div>
 </script>
 
@@ -50,6 +67,8 @@
    <!-- This content appears in the Info sidebar when a node is selected     -->
    <!-- The first <p> is used as the pop-up tool tip when hovering over a    -->
    <!-- node in the palette.                                                 -->
+   <p>If the chip has a white cover (filter) over the sensor paper, then check the <b>F</b> checkbox.</p>
+
    <p>Simple sample input node. Just sends a single message when it starts up.
    This is not very useful.</p>
    <p>Outputs an object called <code>msg</code> containing <code>msg.topic</code> and
@@ -62,21 +81,23 @@
   RED.nodes.registerType('htu21df',{
     category: 'i2c sensors',      // the palette category
     defaults: {             // defines the editable properties of the node
-      name: {value:""},   //  along with default values.
-      topic: {value:"htu21df", required:true}
+      topic: {value: "htu21df", required: true},
+      mRes: {value: '0', required: true},
+      F: {value: false, required: true},
+      debugMode: {value: false}
     },
     inputs:1,               // set the number of inputs - only 0 or 1
-    outputs:1,              // set the number of outputs - 0 to n
+    outputs: 2,              // set the number of outputs - 0 to n
     // set the icon (held in icons dir below where you save the node)
     icon: "chip.png",     // saved in  icons/myicon.
     color: '#75aaff',
     inputs: 1,
     outputs: 2,
     label: function () {
-      return this.name || 'HTU21DF';
+      return (this.F) ? 'HTU21D(F) @ 0x40' : 'HTU21D @ 0x40';
     },
     labelStyle: function () {
-      return this.name ? 'node_label_italic' : '';
+      return 'node_label_italic';
     },
     oneditsave: function() {
       this.log('oneditsave called... nothing to do');
