@@ -25,7 +25,6 @@ module.exports = function (RED) {
   const os = require('os');
   // NPM Imports
   const i2c = require('i2c-bus');
-  const BigNumber = require('bignumber.js');
 
   // Local Imports
   // const Measurement = require('./Measurement.js');
@@ -168,8 +167,6 @@ module.exports = function (RED) {
     } else {
       node.log(`node.p_oversampling -> ${JSON.stringify(node.p_oversampling)}`)
     }
-
-    BigNumber.config({DECIMAL_PLACES: 6});// TODO - base this on t_oversampling, then for P calcs, set based on p_oversampling
 
     node.ctrl_meas = node.tresolution + node.presolution + node.powermode;
     node.log(`ctrl_meas = ${node.ctrl_meas.toString(2)} (0x${node.ctrl_meas.toString(16)})`);

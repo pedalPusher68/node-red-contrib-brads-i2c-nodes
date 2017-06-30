@@ -174,7 +174,6 @@ module.exports = function (RED) {
 
     // Store local copies of the node configuration (as defined in the .html)
     // process config values and throw errors if necessary
-    node.topic = config.topic;
     node.name = `BME280 @ 0x${node.address.toString(16)}`;
     node.topic = config.topic;
     node.powermode = Number(config.powermode);
@@ -200,14 +199,11 @@ module.exports = function (RED) {
     } else {
       debug(`node.hresolution -> ${node.hresolution}`);
       debug(`node.h_oversampling -> ${JSON.stringify(node.h_oversampling)}`);
-
-
       node.ctrl_hum = node.hresolution;
       node.ctrl_meas = node.tresolution + node.presolution + node.powermode;
       debug(`ctrl_hum = ${node.ctrl_hum.toString(2)} (0x${node.ctrl_hum.toString(16)})`);
       debug(`ctrl_meas = ${node.ctrl_meas.toString(2)} (0x${node.ctrl_meas.toString(16)})`);
     }
-    node.decimals = 2;// TODO - base this on t_oversampling, then for P calcs, set based on p_oversampling
 
     // Calibration Data
     node.haveCalibrationData1 = false;
@@ -506,6 +502,36 @@ module.exports = function (RED) {
       return {'RH': var_H};
     }
 
+    function compensateHumidity2(adc_H, t_fine) {
+
+      debug(`ch2:  adc_H -> ${adc_H},\tt_fine -> ${t_fine}`);
+      let var1 = t_fine - 76800.0;
+      debug(`ch2:  var1 -> ${var1}`);
+      let var2 = (node.digH4 * 64.0 + (node.digH5 / 16384.0) * var1);
+      debug(`ch2:  var2 -> ${var2}`);
+      let var3 = adc_H - var2;
+      debug(`ch2:  var3 -> ${var3}`);
+      let var4 = node.digH2 / 65536.0;
+      debug(`ch2:  var4 -> ${var4}`);
+      let var5 = (1.0 + (node.digH3 / 67108864.0) * var1);
+      debug(`ch2:  var5 -> ${var5}`);
+      let var6 = 1.0 + (node.digH6 / 67108864.0) * var1 * var5;
+      debug(`ch2:  var6 -> ${var6}`);
+      var6 = var3 * var4 * (var5 * var6);
+      debug(`ch2:  var6 -> ${var6}`);
+      let humidity = var6 * (1.0 - node.digH1 * var6 / 524288.0);
+      debug(`ch2:  humidity -> ${humidity}`);
+
+      if (humidity > 100.0) {
+        humidity = 100.0;
+      } else if (humidity < 0) {
+        humidity = 0;
+      }
+
+      return humidity;
+
+    }
+
     function measure() {
       debug(' measure() ...');
 
@@ -554,6 +580,7 @@ module.exports = function (RED) {
                 let T = compensateTemperature(node.adc_Ti);
                 let P = compensatePressure(node.adc_Pi, T.t_fine);
                 let RH = compensateHumidity(node.adc_H, T.t_fine);
+                compensateHumidity2(node.adc_H, T.t_fine);
                 let DPc = Util.roundValue(Util.computeDewpoint(T.Tc, RH.RH));
                 let DPf = Util.roundValue(DPc * 1.8 + 32.0);
 

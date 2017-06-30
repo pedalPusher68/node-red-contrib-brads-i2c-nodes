@@ -1,0 +1,97 @@
+<!--
+  Copyright Bradley Smith, bradley.1.smith@gmail.com
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!-- Sample html file that corresponds to the 99-sample.js file              -->
+<!-- This creates and configures the onscreen elements of the node           -->
+
+<!-- If you use this as a template, update the copyright with your own name. -->
+
+<!-- First, the content of the edit dialog is defined.                       -->
+
+<script type="text/x-red" data-template-name="bmp180">
+    <div class="form-row">
+        <span><i class="fa fa-microchip" aria-hidden="true"></i> BMP180 Temperature/Pressure Sensor I2C Configuration</span>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+        <input type="text" id="node-input-topic" placeholder="Topic">
+    </div>
+    <br/>
+
+    <div class="form-row">
+        <label for="node-input-presolution"><i class="fa fa-thermometer-empty" aria-hidden="true"></i> Pressure Oversampling</label>
+         <select id="node-input-presolution">
+            <option value="52">x 1</option>
+            <option value="116">x 2</option>
+            <option value="180">x 4</option>
+            <option value="244">x 8</option>
+        </select>
+    </div>
+    <br/>
+
+    <div class="form-row">
+        <label for="node-input-debugMode"><i class="fa fa-tag"></i> Debug Mode</label>
+        <input type="checkbox" id="node-input-debugMode" placeholder="Debug Mode">
+    </div>
+
+
+
+</script>
+
+
+<!-- Next, some simple help text is provided for the node.                   -->
+<script type="text/x-red" data-help-name="bmp180">
+   <!-- data-help-name identifies the node type this help is for             -->
+   <!-- This content appears in the Info sidebar when a node is selected     -->
+   <!-- The first <p> is used as the pop-up tool tip when hovering over a    -->
+   <!-- node in the palette.                                                 -->
+   <p>Simple sample input node. Just sends a single message when it starts up.
+   This is not very useful.</p>
+   <p>Outputs an object called <code>msg</code> containing <code>msg.topic</code> and
+   <code>msg.payload</code>. msg.payload is a String.</p>
+
+
+</script>
+
+<!-- Finally, the node type is registered along with all of its properties   -->
+<!-- The example below shows a small subset of the properties that can be set-->
+<script type="text/javascript">
+  RED.nodes.registerType('bmp180', {
+    category: 'i2c sensors',      // the palette category
+    defaults: {             // defines the editable properties of the node
+      name: {value: 'bmp180'},   //  along with default values.
+      topic: {value: "", required: false},
+      presolution: {value: 0xf4, validate: RED.validators.number()},
+      debugMode: {value: false}
+    },
+    color: '#75aaff',
+    inputs: 1,  // set the number of inputs - only 0 or 1
+    outputs: 2,  // set the number of outputs - 0 to n
+    icon: 'chip.png',
+    // set the icon (held in icons dir below where you save the node)
+    label: function () {     // sets the default label contents
+      return this.name || this.topic || "bmp180";
+    },
+    labelStyle: function () { // sets the class to apply to the label
+      return this.name ? "node_label_italic" : "";
+    },
+    oneditsave: function () {
+      this.log(Number(this.tresolution));
+      this.presolution = Number(this.presolution);
+    }
+  });
+</script>

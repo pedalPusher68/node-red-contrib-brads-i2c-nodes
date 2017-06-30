@@ -36,6 +36,14 @@ function computeDewpoint(temp, rh) {
 
 exports.computeDewpoint = computeDewpoint;
 
+function computeAltitude(Pressure /* in Pa */) {
+  let part = Math.pow(Pressure / 101325, (1 / 5.255));
+  return 44330 * ( 1 - part );
+}
+
+exports.computeAltitude = computeAltitude;
+
+
 function roundValue( value, decimals = 2 ) {
   let valStr = value.toString();
   if (valStr.length > 10 ) {
@@ -51,3 +59,19 @@ function printHexWord(label, value) {
 }
 
 exports.printHexWord = printHexWord;
+
+/*
+ * Change the format options to suit your tastes/needs.
+ */
+const dateFormatOptions = {
+  year: 'numeric', month: 'numeric', day: 'numeric',
+  hour: 'numeric', minute: 'numeric', second: 'numeric',
+  hour12: false, timeZone: 'America/New_York'
+};
+
+function getTimestamp() {
+  return new Date().toLocaleString('en-US', dateFormatOptions);
+}
+
+exports.getTimestamp = getTimestamp;
+

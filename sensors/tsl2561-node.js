@@ -155,7 +155,7 @@ module.exports = function (RED) {
     node.ready = false;
     node.status({fill: "green", shape: "ring", text: "tsl2561 initializing"});
 
-    if (i2cBus == undefined) {
+    if (i2cBus === undefined) {
       // I2C Bus has to be open for device to work so open it synchronously
       i2cBus = i2c.openSync(1);
       if (!i2cBus) {
@@ -231,9 +231,9 @@ module.exports = function (RED) {
     }).then((resolvedMsg) => {
       node.ready = true;
       node.emit('sensor_ready', resolvedMsg);
-    }, (reject) => {
-      node.status({fill: "red", shape: "ring", text: `tsl2561 check configuration:  ${reject}`});
-      node.error(`${reject}:  node.ready -> ${node.ready}:  , node.deviceId -> ${node.deviceId}`);
+    }, (rejectMsg) => {
+      node.status({fill: "red", shape: "ring", text: `tsl2561 check configuration:  ${rejectMsg}`});
+      node.error(`${rejectMsg}:  node.ready -> ${node.ready}:  , node.deviceId -> ${node.deviceId}`);
     });
 
     node.on('sensor_ready', (msg) => {
