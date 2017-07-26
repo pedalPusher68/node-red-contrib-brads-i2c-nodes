@@ -583,6 +583,7 @@ module.exports = function (RED) {
                 compensateHumidity2(node.adc_H, T.t_fine);
                 let DPc = Util.roundValue(Util.computeDewpoint(T.Tc, RH.RH));
                 let DPf = Util.roundValue(DPc * 1.8 + 32.0);
+                let Alt = Util.roundValue(Util.computeAltitude(P.p));
 
                 if (node.debugMode) {
                   debug(`${node.name} bytes read -> ${bytesRead}.`);
@@ -597,7 +598,7 @@ module.exports = function (RED) {
                   debug(`Dew Point:  ${DPc}, ${DPf}`);
                 }
                 let rsv = {'name': node.name, 'timestamp': timestamp};
-                rsv = Object.assign(rsv, T, P, RH, {'DPc': DPc, 'DPf': DPf});
+                rsv = Object.assign(rsv, T, P, RH, {'DPc': DPc, 'DPf': DPf, 'Alt': Alt});
                 delete rsv.t_fine;
                 resolve(rsv);
               }
