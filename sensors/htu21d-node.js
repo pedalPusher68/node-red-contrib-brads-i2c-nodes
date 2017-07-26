@@ -87,7 +87,7 @@ module.exports = function (RED) {
   let i2cBus = undefined;
 
   // The main node definition - most things happen in here
-  function htu21df(config) {
+  function htu21d(config) {
 
     // Create a RED node
     RED.nodes.createNode(this, config);
@@ -107,13 +107,9 @@ module.exports = function (RED) {
     debug(JSON.stringify(config));
 
     node.address = HTU21DAddress;
+    node.name = (config.F) ? `HTU21D(F) @ 0x${node.address.toString(16)}` : `HTU21D @ 0x${node.address.toString(16)}`;
     node.mResolution = MRES.get(config.mRes);
     debug(JSON.stringify(node.mResolution));
-    node.name = (config.F) ? 'htu21df' : 'htu21d';
-
-    node.temperature = -9999;
-    node.relativeHumidity = -9999;
-    node.dewPoint = -9999;
 
     // 2. Initialize Sensor
     node.ready = false;
@@ -164,36 +160,24 @@ module.exports = function (RED) {
           let now = Date.now();
 
           measure(node).then((resolve) => {
-            let result = {
-              device: "sensor",
-              name: "htu21df",
-              temperatureC: node.temperature,
-              temperatureCString: node.temperature + " \u2103",
-              temperatureF: node.temperature.toNumber() * 1.8 + 32,
-              relativeHumidity: node.relativeHumidity,
-              relativeHumidityString: node.relativeHumidity + " %",
-              dewPointC: node.dewPoint,
-              dewPointCString: node.dewPoint + " \u2103",
-              timestamp: new Date()
-            };
 
             let thingShadow = {
               state: {
                 "reported": {
                   "device": "sensor",
-                  "name": "htu21df",
-                  "temperature": node.temperature.times(1.8).add(32.0).toNumber(),
+                  "name": "htu21d",
+                  "temperature": resolve.Tf,
                   "temperatureUnits": "degrees Fahrenheit",
-                  "relativeHumidity": node.relativeHumidity.toNumber(),
-                  "dewPoint": new BigNumber(node.dewPoint).times(1.8).add(32.0).toNumber(),
-                  "timestamp": node.measurementDate
+                  "relativeHumidity": resolve.RH,
+                  "dewPoint": resolve.DPf,
+                  "timestamp": resolve.timestamp
                 }
               }
             };
 
             node.send([
-              {topic: 'htu21df', payload: result},
-              {topic: 'htu21df', payload: thingShadow}
+              {topic: 'htu21d', payload: resolve},
+              {topic: 'htu21d', payload: thingShadow}
             ]);
 
           }, (reject) => {
@@ -233,9 +217,10 @@ module.exports = function (RED) {
                   reject(errMsg);
                 } else {
                   let dataView = new DataView(buffer.buffer);
-                  node.temperature = new BigNumber(dataView.getUint16(0), 10).div(65536).times('175.72').minus('46.85');
-                  // this.temperature = -46.85 + 175.72 * (dataView.getUint16(0) / 65536);
-                  debug(`Temperature:  ${node.temperature} \u2103`);
+                  let Tc = Util.roundValue(new BigNumber(dataView.getUint16(0), 10).div(65536).times('175.72').minus('46.85'));
+                  let Tf = Util.roundValue(Util.roundValue(Tc * 1.8 + 32.0));
+
+                  debug(`Temperature:  ${Tc} \u2103`);
                   // measure relative humidity
                   i2cBus.sendByte(node.address, commandMeasureHumidityNoHoldMaster, (err) => {
                     if (err) {
@@ -250,13 +235,22 @@ module.exports = function (RED) {
                             node.error(errMsg);
                             reject(errMsg);
                           } else {
-                            node.measurementDate = new Date().toLocaleString('en-US', dateFormatOptions);
                             let dataView = new DataView(buffer.buffer);
-                            node.relativeHumidity = new BigNumber(dataView.getUint16(0)).div(65536).times(125).minus(6);
-                            // this.relativeHumidity = -6.0 + 125 * (dataView.getUint16(0) / 65536);
-                            debug(`HTU21DF RH:  ${node.relativeHumidity} %`);
-                            node.dewPoint = Util.computeDewpoint(node.temperature, node.relativeHumidity);
-                            resolve([node.temperature, node.relativeHumidity, node.dewPoint]);
+                            let RH = Util.roundValue(new BigNumber(dataView.getUint16(0)).div(65536).times(125).minus(6));
+                            debug(`HTU21DF RH:  ${RH} %`);
+                            let DPc = Util.roundValue(Util.computeDewpoint(Tc, RH));
+                            let DPf = Util.roundValue(DPc * 1.8 + 32.0);
+
+                            let rsv = {
+                              'name': node.name,
+                              'timestamp': Util.getTimestamp(),
+                              'Tc': Tc,
+                              'Tf': Tf,
+                              'RH': RH,
+                              'DPc': DPc,
+                              'DPf': DPf
+                            };
+                            resolve(rsv);
                           }
                         });
                       }, waitTimeRH12BIT);
@@ -269,11 +263,10 @@ module.exports = function (RED) {
         });
       });
     }
-
   }
 
   // Register the node by name. This must be called before overriding any of the
   // Node functions.
-  RED.nodes.registerType("htu21df", htu21df);
+  RED.nodes.registerType("htu21d", htu21d);
 
 }

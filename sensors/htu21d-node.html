@@ -21,7 +21,7 @@
 
 <!-- First, the content of the edit dialog is defined.                       -->
 
-<script type="text/x-red" data-template-name="htu21df">
+<script type="text/x-red" data-template-name="htu21d">
     <div class="form-row">
         <span><i class="fa fa-microchip" aria-hidden="true"></i> HTU21D(F) Digital Relative Humidity & Temperature<br/> Sensor I2C Configuration</span>
     </div>
@@ -62,7 +62,7 @@
 
 
 <!-- Next, some simple help text is provided for the node.                   -->
-<script type="text/x-red" data-help-name="htu21df">
+<script type="text/x-red" data-help-name="htu21d">
    <!-- data-help-name identifies the node type this help is for             -->
    <!-- This content appears in the Info sidebar when a node is selected     -->
    <!-- The first <p> is used as the pop-up tool tip when hovering over a    -->
@@ -78,10 +78,10 @@
 <!-- Finally, the node type is registered along with all of its properties   -->
 <!-- The example below shows a small subset of the properties that can be set-->
 <script type="text/javascript">
-  RED.nodes.registerType('htu21df',{
+  RED.nodes.registerType('htu21d', {
     category: 'i2c sensors',      // the palette category
     defaults: {             // defines the editable properties of the node
-      topic: {value: "htu21df", required: true},
+      topic: {value: "htu21d", required: true},
       mRes: {value: '0', required: true},
       F: {value: false, required: true},
       debugMode: {value: false}
