@@ -64,22 +64,27 @@ module.exports = function (RED) {
   const TSL2561_AGC_THI_402MS = 63000   // Max value at Ti 402ms = 65535
   const TSL2561_AGC_TLO_402MS = 500
 
-
   const INTEG = new Map();
   INTEG.set('0', {
     value: 0b00,
     timeMs: 14, // 13.7 ms
     scale: 0.034,
+    ch0fullScaleCountMax: 4845, // Approx. 96% of full scale count (5047) at this sampling time
+    ch0fullScaleCountMin: 200   // Approx. 4% of full scale count (5047) at this sampling time
   });
   INTEG.set('1', {
     value: 0b01,
     timeMs: 101, // 101 ms
     scale: 0.252,
+    ch0fullScaleCountMax: 35600, // Approx. 96% of full scale count (37177) at this sampling time
+    ch0fullScaleCountMin: 1400   // Approx. 4% of full scale count (5047) at this sampling time
   });
   INTEG.set('2', {
     value: 0b10,
     timeMs: 402, // 402 ms
     scale: 1,
+    ch0fullScaleCountMax: 63000, // Approx. 96% of full scale count (65535) at this sampling time
+    ch0fullScaleCountMin: 2600   // Approx. 4% of full scale count (65535) at this sampling time
   });
   INTEG.set('3', {
     value: 0b11,
@@ -132,7 +137,10 @@ module.exports = function (RED) {
     }
     node.name = `TSL2561 @ 0x${node.address.toString(16)}`;
     node.integ = (config && config.integ) ? INTEG.get(config.integ) : INTEG.get('2');
-    node.devid = undefined;
+
+    node.gain = (config && config.gain) ? Number(config.gain) : GAIN_AUTO;
+
+    node.deviceId = undefined;
     node.revision = undefined;
 
     node.interruptSet = false;
@@ -272,8 +280,8 @@ module.exports = function (RED) {
                         channel0 = buffer[1] * 256 + buffer[0];
                         channel1 = buffer[3] * 256 + buffer[2];
                         if (node.debugMode) {
-                          node.log(`Channel 0 (high, low):  0x${buffer[1].toString(16)}, 0x${buffer[0].toString(16)}\tvalue = 0x${channel0.toString(16)}`);
-                          node.log(`Channel 1 (high, low):  0x${buffer[3].toString(16)}, 0x${buffer[2].toString(16)}\tvalue = 0x${channel1.toString(16)}`);
+                          debug(`Channel 0 (high, low):  0x${buffer[1].toString(16)}, 0x${buffer[0].toString(16)}\tvalue = 0x${channel0.toString(16)}`);
+                          debug(`Channel 1 (high, low):  0x${buffer[3].toString(16)}, 0x${buffer[2].toString(16)}\tvalue = 0x${channel1.toString(16)}`);
 
                           if (!node.interruptSet) {
                             let ch0TLow = channel0 * 0.7;
