@@ -25,6 +25,7 @@ module.exports = function (RED) {
   const os = require('os');
   // NPM Imports
   const i2c = require('i2c-bus');
+  const BigNumber = require('bignumber.js');
 
   // Local Imports
   // const Measurement = require('./Measurement.js');
