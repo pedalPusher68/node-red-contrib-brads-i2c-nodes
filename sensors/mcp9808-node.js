@@ -10,6 +10,8 @@ module.exports = function (RED) {
   // Local Imports
   const Util = require('./util.js');
 
+  // MCP9808 Device Constants
+  // - possible I2C addresses
   //                  AAA
   //                  210
   //                  === (A2, A1, A0 bits)
@@ -22,6 +24,7 @@ module.exports = function (RED) {
   const MCP9808Address110 = 0x1e;
   const MCP9808Address111 = 0x1f;
 
+  // - device registers
   const REGISTER_CONFIGURATION = 0x01;
   const REGISTER_ALERT_TEMP_UPPER_BOUNDARY = 0x02;
   const REGISTER_ALERT_TEMP_LOWER_BOUNDARY = 0x03;
@@ -31,6 +34,8 @@ module.exports = function (RED) {
   const REGISTER_DEVICE_ID = 0x07;
   const REGISTER_RESOLUTION = 0x08;
 
+  // - device settings
+  //   - measurement resolutions
   const RESOLUTIONS = new Map();
   RESOLUTIONS.set('0', {
     display: '+/- 0.5 \u2103',
@@ -65,12 +70,6 @@ module.exports = function (RED) {
     commandByte: 3
   }); // default
 
-  const dateFormatOptions = {
-    year: 'numeric', month: 'numeric', day: 'numeric',
-    hour: 'numeric', minute: 'numeric', second: 'numeric',
-    hour12: false, timeZone: 'America/New_York'
-  };
-
   let i2cBus = undefined;
 
   function mcp9808(config) {
@@ -85,22 +84,25 @@ module.exports = function (RED) {
     // 3. update node.status and begin measuring if wired to.
 
     // 1. Process Config
-    node.address = config.address;
-    if (node.address < MCP9808Address000 || node.address > MCP9808Address111) {
-      node.error(`${node.address} is a bad address - check config.`);
-      node.status({fill: "red", shape: "ring", text: `${node.address} is a bad address - check config.`});
-    }
-    node.name = `@ 0x${node.address.toString(16)}`;
+    deviceConfig(node, config)
+
     node.debugMode = (config && config.debugMode);
 
     function debug(msg) {
       if (node.debugMode) {
         node.log(msg);
+        node.debug(msg);
       }
     }
 
     debug(JSON.stringify(config));
 
+    node.address = config.address;
+    if (node.address < MCP9808Address000 || node.address > MCP9808Address111) {
+      node.error(`${node.address} is a bad address - check config.`);
+      node.status({fill: "red", shape: "ring", text: `${node.address} is a bad address - check config.`});
+    }
+    node.name = `MCP9808 @ 0x${node.address.toString(16)}`;
     node.resolution = (config && config.resolution) ? RESOLUTIONS.get(config.resolution) : RESOLUTIONS.get('3');
     node.units = (config && config.units) ? config.units : 'F';
 
@@ -108,17 +110,13 @@ module.exports = function (RED) {
       node.log(`mcp9808 configuration`);
       node.log(`name -> ${node.name}`);
       node.log(`resolution -> ${JSON.stringify(node.resolution)}`);
-      node.log(`address -> ${node.address.toString(16)}`);
+      node.log(`address -> ${node.address}`);
       node.log(`units -> ${node.units}`);
       node.log(`debugMode -> ${node.debugMode}`);
     }
 
     // 2. Initialize Sensor
     node.ready = false;
-    node.deviceId = 0;
-    node.deviceRevision = 0;
-    node.manufacturerId = 0;
-
     node.status({fill: "green", shape: "ring", text: "mcp9808 initializing"});
 
     if (i2cBus == undefined) {
@@ -228,7 +226,7 @@ module.exports = function (RED) {
                           temperature = temperature.neg().plus(256);
                         }
                         let temperatureF = temperature.times(1.8).plus(32.0);
-                        let timestamp = new Date().toLocaleString('en-US', dateFormatOptions);
+                        let timestamp = Util.getTimestamp()
 
                         debug("temperatureF -> " + temperatureF);
                         resolve(
@@ -280,6 +278,11 @@ module.exports = function (RED) {
         }
       }
     });
+
+    function deviceConfig(node, config) {
+      debug(`deviceConfig:  node -> ${node.name},  config -> ${JSON.stringify(config)}`)
+    }
+
   }
 
   RED.nodes.registerType("mcp9808", mcp9808);

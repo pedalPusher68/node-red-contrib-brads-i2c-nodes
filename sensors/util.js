@@ -69,8 +69,11 @@ const dateFormatOptions = {
   hour12: false, timeZone: 'America/New_York'
 };
 
-function getTimestamp() {
-  return new Date().toLocaleString('en-US', dateFormatOptions);
+function getTimestamp(locale, timeZone) {
+  let loc = (locale) ? locale : 'en-US' // default to en-US for locale
+  let tz = (timeZone) ? timeZone : 'America/New_York' // default to Eastern timezone
+  dateFormatOptions.timeZone = timeZone;
+  return new Date().toLocaleString(loc, dateFormatOptions);
 }
 
 exports.getTimestamp = getTimestamp;
