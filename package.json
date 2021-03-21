@@ -1,29 +1,22 @@
 {
   "name": "node-red-contrib-brads-i2c-nodes",
-  "version": "0.0.5-alpha",
+  "version": "1.0-alpha",
   "description": "Brad's Node RED i2c sensor modules.",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "bignumber.js": "^4.0.2",
-    "i2c-bus": "^1.2.2"
+    "bignumber": "^1.1.0",
+    "bignumber.js": "^9.0.1",
+    "i2c-bus": "^5.2.1"
   },
   "node-red": {
     "nodes": {
       "mcp9808": "sensors/mcp9808-node.js",
-      "bmp180": "sensors/bmp180-node.js",
-      "bmp280": "sensors/bmp280-node.js",
-      "bme280": "sensors/bme280-node.js",
-      "htu21d": "sensors/htu21d-node.js",
-      "i2cbus": "sensors/i2c-bus.js",
-      "tsl2561": "sensors/tsl2561-node.js"
+      "bme280": "sensors/bme280-node.js"
     }
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/pedalPusher68/node-red-contrib-brads-i2c-nodes.git"
-  },
+  "repository": "https://github.com/pedalPusher68/node-red-contrib-brads-i2c-nodes.git",
   "keywords": [
     "node-red",
     "mcp9808",

@@ -26,6 +26,9 @@ module.exports = function (RED) {
   const Util = require('./util.js');
 
   // BME280 Constants:
+  const BME280Address076 = 0x76; // SDO to GND address
+  const BME280Address077 = 0x77; // SDO to Vddio address
+
   const REGISTER_DEVICE_ID = 0xd0;
   const REGISTER_RESET = 0xe0;
   const REGISTER_CTRL_HUM = 0xf2;
@@ -159,6 +162,13 @@ module.exports = function (RED) {
     let node = this;
 
     // 1. Process Config
+    node.address = (config.address && Number.isInteger(config.address)) ? config.address : getIntegerValue(config.address, BME280Address076)
+    node.log(`config.address -> 0x${config.address.toString(16)}`)
+    if (node.address < BME280Address076 || node.address > BME280Address077) {
+      node.error(`${node.address} is a bad address - check config.`);
+      node.status({fill: "red", shape: "ring", text: `${node.address} is a bad address - check config.`});
+    }
+    node.name = `@ 0x${node.address.toString(16)}`;
     node.debugMode = (config && config.debugMode);
 
     function debug(msg) {
@@ -169,12 +179,12 @@ module.exports = function (RED) {
 
     debug(JSON.stringify(config));
 
-    node.address = Number(config.address);
-    debug(`bme280 address:  0x${node.address.toString(16)}`);
+    // node.address = Number(config.address);
+    // debug(`bme280 address:  0x${node.address.toString(16)}`);
 
     // Store local copies of the node configuration (as defined in the .html)
     // process config values and throw errors if necessary
-    node.name = `BME280 @ 0x${node.address.toString(16)}`;
+    // node.name = `BME280 @ 0x${node.address.toString(16)}`;
     node.topic = config.topic;
     node.powermode = Number(config.powermode);
     node.tresolution = Number(config.tresolution);
@@ -252,7 +262,8 @@ module.exports = function (RED) {
 
     // get calibration parameters set 1 (1 of 2)
     let p2 = new Promise((resolve, reject) => {
-      let buffer = new Uint8Array(12 * 2 + 1 /* 12 coefficients, 2 bytes each + 1 byte*/);
+      //let buffer = new Uint8Array(12 * 2 + 1 /* 12 coefficients, 2 bytes each + 1 byte*/);
+      let buffer = Buffer.alloc(12 * 2 + 1 /* 12 coefficients, 2 bytes each + 1 byte*/);
       i2cBus.readI2cBlock(node.address, CALIBRATION_PARAMS_ADDRESS1, buffer.length, buffer, (err, bytesRead, buffer) => {
         if (err) {
           let errResult = `${node.name} read calibration parameters error:  ${err}`;
@@ -299,7 +310,8 @@ module.exports = function (RED) {
 
     // get calibration parameters set 2 (2 of 2)
     let p3 = new Promise((resolve, reject) => {
-      let buffer = new Uint8Array(7);
+      //let buffer = new Uint8Array(7);
+      let buffer = Buffer.alloc(7)
       i2cBus.readI2cBlock(node.address, CALIBRATION_PARAMS_ADDRESS2, buffer.length, buffer, (err, bytesRead, buffer) => {
         if (err) {
           let errResult = `${node.name} read calibration parameters error:  ${err}`;
@@ -535,7 +547,8 @@ module.exports = function (RED) {
     function measure() {
       debug(' measure() ...');
 
-      let buffer = new Uint8Array(8);
+      //let buffer = new Uint8Array(8);
+      let buffer = Buffer.alloc(8);
       let timeToWait = getMaxMeasureTime(node.tresolution, node.presolution, node.hresolution);
       debug(`timeToWait -> ${timeToWait} ms`);
 

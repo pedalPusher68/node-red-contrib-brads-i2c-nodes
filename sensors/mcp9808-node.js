@@ -85,6 +85,12 @@ module.exports = function (RED) {
     // 3. update node.status and begin measuring if wired to.
 
     // 1. Process Config
+    node.address = config.address;
+    if (node.address < MCP9808Address000 || node.address > MCP9808Address111) {
+      node.error(`${node.address} is a bad address - check config.`);
+      node.status({fill: "red", shape: "ring", text: `${node.address} is a bad address - check config.`});
+    }
+    node.name = `@ 0x${node.address.toString(16)}`;
     node.debugMode = (config && config.debugMode);
 
     function debug(msg) {
@@ -95,12 +101,6 @@ module.exports = function (RED) {
 
     debug(JSON.stringify(config));
 
-    node.address = config.address;
-    if (node.address < MCP9808Address000 || node.address > MCP9808Address111) {
-      node.error(`${node.address} is a bad address - check config.`);
-      node.status({fill: "red", shape: "ring", text: `${node.address} is a bad address - check config.`});
-    }
-    node.name = `MCP9808 @ 0x${node.address.toString(16)}`;
     node.resolution = (config && config.resolution) ? RESOLUTIONS.get(config.resolution) : RESOLUTIONS.get('3');
     node.units = (config && config.units) ? config.units : 'F';
 
@@ -108,17 +108,17 @@ module.exports = function (RED) {
       node.log(`mcp9808 configuration`);
       node.log(`name -> ${node.name}`);
       node.log(`resolution -> ${JSON.stringify(node.resolution)}`);
-      node.log(`address -> ${node.address}`);
+      node.log(`address -> ${node.address.toString(16)}`);
       node.log(`units -> ${node.units}`);
       node.log(`debugMode -> ${node.debugMode}`);
     }
 
-    this.on('deploy', (msg) => {
-      debug(`deploy event received msg -> ${msg}`);
-    });
-
     // 2. Initialize Sensor
     node.ready = false;
+    node.deviceId = 0;
+    node.deviceRevision = 0;
+    node.manufacturerId = 0;
+
     node.status({fill: "green", shape: "ring", text: "mcp9808 initializing"});
 
     if (i2cBus == undefined) {
@@ -134,26 +134,47 @@ module.exports = function (RED) {
     BigNumber.config({DECIMAL_PLACES: dp});
 
     let ip1 = new Promise((resolve, reject) => {
-      i2cBus.readWord(node.address, REGISTER_DEVICE_ID, (err, wordBytes) => {
+      const buffer = Buffer.alloc(2)
+
+      i2cBus.readI2cBlock(node.address, REGISTER_DEVICE_ID, 2, buffer, (err, bytesRead, buffer) => {
         if (err) {
           let errMsg = `mcp9808 get device ID error:  ${err}`;
           node.status({fill: "red", shape: "ring", text: errMsg});
           reject(errMsg);
         } else {
-          // node.deviceId = ((wordBytes & 0xff00) >> 8);
-          // TODO - on 4/22/2017, the wordBytes seem to be reverse from what I've seen to this point...
-          // TODO   - pull ManufacturerId for comparison - should be 0x0054
-          node.deviceId = wordBytes;
-          debug(`wordBytes => 0x${wordBytes.toString(16)}, B${wordBytes.toString(2)},  deviceId -> ${node.deviceId}`);
-          // if (node.deviceId != 0x04) {
-          //   reject(`Bad deviceId (${node.deviceId}) at address 0x${node.address.toString(16)}.`);
-          // }
-          resolve(`Device ID:  0x${node.deviceId.toString(16)}`);
+          node.deviceId = buffer.readInt8(0);
+          node.deviceRevision = buffer.readInt8(1);
+          if (node.deviceId === 0x04) {
+            resolve(`Device ID:  0x${node.deviceId.toString(16)}`);
+          } else {
+            reject(`MCP9808(@ 0x${node.address.toString(16)}) read Device ID:  0x${node.deviceId.toString(16)} - expected 0x04`)
+          }
         }
-      });
-    });
+      })
+    })
 
     let ip2 = new Promise((resolve, reject) => {
+      const buffer = Buffer.alloc(2)
+
+      i2cBus.readI2cBlock(node.address, REGISTER_MANUFACTURER_ID, 2, buffer, (err, bytesRead, buffer) => {
+        if (err) {
+          let errMsg = `mcp9808 get device manufacturer ID error:  ${err}`;
+          node.status({fill: "red", shape: "ring", text: errMsg});
+          reject(errMsg);
+        } else {
+          node.manufacturerId = buffer.readInt16BE(0);
+          if (node.manufacturerId === 0x0054) {
+            debug(`Manufacturer ID:  0x${node.manufacturerId.toString(16)}`);
+            resolve(`Manufacturer ID:  0x${node.manufacturerId.toString(16)}`);
+          } else {
+            reject(`MCP9808(@ 0x${node.address.toString(16)}) read Manufacturer ID:  0x${node.manufacturerId.toString(16)} - expected 0x0054`)
+          }
+        }
+      })
+    })
+
+    // Apply Configuration to Device
+    let ip3 = new Promise((resolve, reject) => {
       i2cBus.writeByte(node.address, REGISTER_RESOLUTION, node.resolution.commandByte, (err) => {
         if (err) {
           let errMsg = `mcp9808 set resolution error:  ${err}`;
@@ -165,7 +186,7 @@ module.exports = function (RED) {
       });
     });
 
-    Promise.all([ip1, ip2]).then((resolve) => {
+    Promise.all([ip1, ip2, ip3]).then((resolve) => {
       // node.status({fill: "green", shape: "dot", text: "mcp9808 ready"});
       node.ready = true;
       node.emit('sensor_ready', resolve);
@@ -193,7 +214,7 @@ module.exports = function (RED) {
                     reject(`mcp9808 set measure temperature error:  ${err}`);
                   } else {
 
-                    let buffer = new Uint8Array(2);
+                    let buffer = Buffer.alloc(2)
                     i2cBus.readI2cBlock(node.address, REGISTER_TEMPERATURE, buffer.length, buffer, (err, bytesRead, buffer) => {
                       if (err) {
                         reject( `mcp9808 get temperature bytes error:  ${err}` );

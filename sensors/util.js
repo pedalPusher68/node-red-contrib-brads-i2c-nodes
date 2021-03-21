@@ -75,3 +75,19 @@ function getTimestamp() {
 
 exports.getTimestamp = getTimestamp;
 
+function getIntegerValue(value, defaultV) {
+  let iv = (defaultV) ? defaultV : 0
+  if (value) {
+    if (Number.isInteger(value)) {
+      iv = value
+    } else {
+      let iiv = Number.parseInt(value)
+      if (Number.isInteger(iiv)) {
+        iv = iiv
+      }
+    }
+  }
+  return iv
+}
+
+exports.getIntegerValue = getIntegerValue
