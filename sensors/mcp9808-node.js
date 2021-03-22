@@ -77,7 +77,7 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
 
     let BigNumber = require('bignumber.js');
-    let node = this;
+    const node = this;
 
     // 1. process config - pull parameter values
     // 2. initialize sensor
@@ -86,34 +86,15 @@ module.exports = function (RED) {
     // 1. Process Config
     deviceConfig(node, config)
 
-    node.debugMode = (config && config.debugMode);
+    // node.address = config.address;
+    // if (node.address < MCP9808Address000 || node.address > MCP9808Address111) {
+    //   node.error(`${node.address} is a bad address - check config.`);
+    //   node.status({fill: "red", shape: "ring", text: `${node.address} is a bad address - check config.`});
+    // }
+    // node.name = `MCP9808 @ 0x${node.address.toString(16)}`;
+    // node.resolution = (config && config.resolution) ? RESOLUTIONS.get(config.resolution) : RESOLUTIONS.get('3');
+    // node.units = (config && config.units) ? config.units : 'F';
 
-    function debug(msg) {
-      if (node.debugMode) {
-        node.log(msg);
-        node.debug(msg);
-      }
-    }
-
-    debug(JSON.stringify(config));
-
-    node.address = config.address;
-    if (node.address < MCP9808Address000 || node.address > MCP9808Address111) {
-      node.error(`${node.address} is a bad address - check config.`);
-      node.status({fill: "red", shape: "ring", text: `${node.address} is a bad address - check config.`});
-    }
-    node.name = `MCP9808 @ 0x${node.address.toString(16)}`;
-    node.resolution = (config && config.resolution) ? RESOLUTIONS.get(config.resolution) : RESOLUTIONS.get('3');
-    node.units = (config && config.units) ? config.units : 'F';
-
-    if (node.debugMode) {
-      node.log(`mcp9808 configuration`);
-      node.log(`name -> ${node.name}`);
-      node.log(`resolution -> ${JSON.stringify(node.resolution)}`);
-      node.log(`address -> ${node.address}`);
-      node.log(`units -> ${node.units}`);
-      node.log(`debugMode -> ${node.debugMode}`);
-    }
 
     // 2. Initialize Sensor
     node.ready = false;
@@ -162,7 +143,7 @@ module.exports = function (RED) {
         } else {
           node.manufacturerId = buffer.readInt16BE(0);
           if (node.manufacturerId === 0x0054) {
-            debug(`Manufacturer ID:  0x${node.manufacturerId.toString(16)}`);
+            node.debug(`Manufacturer ID:  0x${node.manufacturerId.toString(16)}`);
             resolve(`Manufacturer ID:  0x${node.manufacturerId.toString(16)}`);
           } else {
             reject(`MCP9808(@ 0x${node.address.toString(16)}) read Manufacturer ID:  0x${node.manufacturerId.toString(16)} - expected 0x0054`)
@@ -194,7 +175,7 @@ module.exports = function (RED) {
     });
 
     node.on('sensor_ready', (msg) => {
-      debug(`sensor_ready:  msg -> ${msg}`);
+      node.debug(`sensor_ready:  msg -> ${msg}`);
       node.status({fill: "green", shape: "dot", text: "mcp9808 ready"});
     });
 
@@ -228,14 +209,14 @@ module.exports = function (RED) {
                         let temperatureF = temperature.times(1.8).plus(32.0);
                         let timestamp = Util.getTimestamp()
 
-                        debug("temperatureF -> " + temperatureF);
+                        node.debug("temperatureF -> " + temperatureF);
                         resolve(
-                          {
-                            'name': node.name,
-                            'timestamp': timestamp,
-                            'Tc': Util.roundValue(temperature),
-                            'Tf': Util.roundValue(temperatureF)
-                          }
+                            {
+                              'name': node.name,
+                              'timestamp': timestamp,
+                              'Tc': Util.roundValue(temperature),
+                              'Tf': Util.roundValue(temperatureF)
+                            }
                         );
                       }
                     });
@@ -243,7 +224,7 @@ module.exports = function (RED) {
                 }, node.resolution.timeMs);
               });
             }).then( (resolve) => {
-              debug(JSON.stringify(resolve));
+              node.debug(JSON.stringify(resolve));
               //{ 'name': node.name, 'timestamp': timestamp, 'Tc':Util.roundValue( temperature ), 'Tf':Util.roundValue(temperatureF) }
 
               let thingShadow = {
@@ -279,10 +260,43 @@ module.exports = function (RED) {
       }
     });
 
-    function deviceConfig(node, config) {
-      debug(`deviceConfig:  node -> ${node.name},  config -> ${JSON.stringify(config)}`)
+    /**
+     * This is different than the NodeRED log.debug() logging.
+     * If this node's debugMode is set to true then this function will use node.log() to log a 'debug' msg to the console
+     * at the 'info' logging level.
+     *
+     * @param msg
+     */
+    function debug(msg) {
+      if (node.debugMode) {
+        node.log(msg);
+      }
     }
 
+    function deviceConfig(node, config) {
+
+      node.debugMode = (config && config.debugMode);
+
+      debug(`deviceConfig:  node -> ${node.name},  config -> ${JSON.stringify(config)}`)
+
+      node.address = config.address;
+      if (node.address < MCP9808Address000 || node.address > MCP9808Address111) {
+        node.error(`${node.address} is a bad address - check config.`);
+        node.status({fill: "red", shape: "ring", text: `${node.address} is a bad address - check config.`});
+      }
+      node.name = `@ 0x${node.address.toString(16)}`;
+      node.resolution = (config && config.resolution) ? RESOLUTIONS.get(config.resolution) : RESOLUTIONS.get('3');
+      node.units = (config && config.units) ? config.units : 'F';
+
+      if (node.debugMode) {
+        node.log(`mcp9808 configuration`);
+        node.log(`name -> ${node.name}`);
+        node.log(`resolution -> ${JSON.stringify(node.resolution)}`);
+        node.log(`address -> ${node.address}`);
+        node.log(`units -> ${node.units}`);
+        node.log(`debugMode -> ${node.debugMode}`);
+      }
+    }
   }
 
   RED.nodes.registerType("mcp9808", mcp9808);
