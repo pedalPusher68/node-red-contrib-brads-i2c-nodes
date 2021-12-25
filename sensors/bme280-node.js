@@ -252,7 +252,7 @@ module.exports = function (RED) {
 
     // get calibration parameters set 1 (1 of 2)
     let p2 = new Promise((resolve, reject) => {
-      let buffer = new Uint8Array(12 * 2 + 1 /* 12 coefficients, 2 bytes each + 1 byte*/);
+      let buffer = Buffer.alloc(12 * 2 + 1 /* 12 coefficients, 2 bytes each + 1 byte*/); //new Uint8Array(12 * 2 + 1 /* 12 coefficients, 2 bytes each + 1 byte*/);
       i2cBus.readI2cBlock(node.address, CALIBRATION_PARAMS_ADDRESS1, buffer.length, buffer, (err, bytesRead, buffer) => {
         if (err) {
           let errResult = `${node.name} read calibration parameters error:  ${err}`;
@@ -299,7 +299,7 @@ module.exports = function (RED) {
 
     // get calibration parameters set 2 (2 of 2)
     let p3 = new Promise((resolve, reject) => {
-      let buffer = new Uint8Array(7);
+      let buffer = Buffer.alloc(7); //new Uint8Array(7);
       i2cBus.readI2cBlock(node.address, CALIBRATION_PARAMS_ADDRESS2, buffer.length, buffer, (err, bytesRead, buffer) => {
         if (err) {
           let errResult = `${node.name} read calibration parameters error:  ${err}`;
@@ -535,7 +535,7 @@ module.exports = function (RED) {
     function measure() {
       debug(' measure() ...');
 
-      let buffer = new Uint8Array(8);
+      let buffer = Buffer.alloc(8); //new Uint8Array(8);
       let timeToWait = getMaxMeasureTime(node.tresolution, node.presolution, node.hresolution);
       debug(`timeToWait -> ${timeToWait} ms`);
 

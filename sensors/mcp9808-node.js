@@ -193,7 +193,7 @@ module.exports = function (RED) {
                     reject(`mcp9808 set measure temperature error:  ${err}`);
                   } else {
 
-                    let buffer = new Uint8Array(2);
+                    let buffer = Buffer.alloc(2); //new Uint8Array(2);
                     i2cBus.readI2cBlock(node.address, REGISTER_TEMPERATURE, buffer.length, buffer, (err, bytesRead, buffer) => {
                       if (err) {
                         reject( `mcp9808 get temperature bytes error:  ${err}` );

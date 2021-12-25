@@ -257,7 +257,7 @@ module.exports = function (RED) {
 
             let lux = 0;
 
-            let buffer = new Uint8Array(4);
+            let buffer = Buffer.alloc(4); //new Uint8Array(4);
             let channel0 = 0;
             let channel1 = 0;
 
