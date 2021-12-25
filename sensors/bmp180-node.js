@@ -145,7 +145,7 @@ module.exports = function (RED) {
 
     // get calibration parameters
     let p2 = new Promise((resolve, reject) => {
-      let buffer = new Uint8Array(11 * 2 /* 12 coefficients, 2 bytes each */);
+      let buffer = Buffer.alloc(11 * 2 /* 11 coefficients, 2 bytes each */); //new Uint8Array(11 * 2 /* 12 coefficients, 2 bytes each */);
       i2cBus.readI2cBlock(node.address, CALIBRATION_PARAMS_ADDRESS, buffer.length, buffer, (err, bytesRead, buffer) => {
         if (err) {
           let errResult = `${node.name} read calibration parameters error:  ${err}`;
@@ -237,7 +237,7 @@ module.exports = function (RED) {
     function measure() {
       debug(' measure() ...');
 
-      let buffer = new Uint8Array(3);
+      let buffer = Buffer.alloc(3); //new Uint8Array(3);
       let timestamp;
       let UT = 0;
       let UP = 0;

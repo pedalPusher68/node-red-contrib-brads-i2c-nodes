@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "bignumber.js": "^4.0.2",
-    "i2c-bus": "^1.2.2"
+    "i2c-bus": "^5.2.2"
   },
   "node-red": {
     "nodes": {
